@@ -17,11 +17,11 @@ public class WelcomeMessage {
     @JsonProperty("conversationId")
     private String conversationId;
 
-    @JsonProperty("to")
-    private String to;
+    @JsonProperty("phoneNumber")
+    private String phoneNumber;
 
-    @JsonProperty("body")
-    private String body;
+    @JsonProperty("message")
+    private String message;
 
     @JsonProperty("messageType")
     private String messageType;
@@ -55,13 +55,13 @@ public class WelcomeMessage {
             return this;
         }
 
-        public Builder to(String to) {
-            message.to = to;
+        public Builder phoneNumber(String phoneNumber) {
+            message.phoneNumber = phoneNumber;
             return this;
         }
 
-        public Builder body(String body) {
-            message.body = body;
+        public Builder message(String messageText) {
+            message.message = messageText;
             return this;
         }
 
@@ -189,20 +189,20 @@ public class WelcomeMessage {
         this.conversationId = conversationId;
     }
 
-    public String getTo() {
-        return to;
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    public void setTo(String to) {
-        this.to = to;
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
-    public String getBody() {
-        return body;
+    public String getMessage() {
+        return message;
     }
 
-    public void setBody(String body) {
-        this.body = body;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public String getMessageType() {

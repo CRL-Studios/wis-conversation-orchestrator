@@ -127,7 +127,7 @@ public class SchedulerFunction {
             ScheduledMessageRequest message = ScheduledMessageRequest.builder()
                     .messageId(java.util.UUID.randomUUID().toString())
                     .customerId(customer.id)
-                    .to(customer.currentPhone)
+                    .phoneNumber(customer.currentPhone)
                     .messageType("daily_devotional")
                     .priority("normal")
                     .themes(customer.messagingState.extractedThemes)
@@ -155,10 +155,10 @@ public class SchedulerFunction {
             ScheduledMessageRequest message = ScheduledMessageRequest.builder()
                     .messageId(java.util.UUID.randomUUID().toString())
                     .customerId(customer.id)
-                    .to(customer.currentPhone)
+                    .phoneNumber(customer.currentPhone)
                     .messageType("season_check_in")
                     .priority("normal")
-                    .body("Hi! It's been a while. How are things going? " +
+                    .message("Hi! It's been a while. How are things going? " +
                           "Has your season of life changed since we last talked? " +
                           "Feel free to share what's on your heart.")
                     .build();

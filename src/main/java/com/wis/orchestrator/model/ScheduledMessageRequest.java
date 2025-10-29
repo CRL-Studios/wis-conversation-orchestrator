@@ -16,8 +16,8 @@ public class ScheduledMessageRequest {
     @JsonProperty("customerId")
     private String customerId;
 
-    @JsonProperty("to")
-    private String to;
+    @JsonProperty("phoneNumber")
+    private String phoneNumber;
 
     @JsonProperty("messageType")
     private String messageType; // "daily_devotional", "season_check_in"
@@ -25,8 +25,8 @@ public class ScheduledMessageRequest {
     @JsonProperty("priority")
     private String priority;
 
-    @JsonProperty("body")
-    private String body; // Pre-generated body (for check-ins), or null (for devotionals - AI generates)
+    @JsonProperty("message")
+    private String message; // Pre-generated message (for check-ins), or null (for devotionals - AI generates)
 
     @JsonProperty("themes")
     private List<String> themes; // User's themes for AI personalization
@@ -52,8 +52,8 @@ public class ScheduledMessageRequest {
             return this;
         }
 
-        public Builder to(String to) {
-            message.to = to;
+        public Builder phoneNumber(String phoneNumber) {
+            message.phoneNumber = phoneNumber;
             return this;
         }
 
@@ -67,8 +67,8 @@ public class ScheduledMessageRequest {
             return this;
         }
 
-        public Builder body(String body) {
-            message.body = body;
+        public Builder message(String messageText) {
+            message.message = messageText;
             return this;
         }
 
@@ -104,12 +104,12 @@ public class ScheduledMessageRequest {
         this.customerId = customerId;
     }
 
-    public String getTo() {
-        return to;
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    public void setTo(String to) {
-        this.to = to;
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getMessageType() {
@@ -128,12 +128,12 @@ public class ScheduledMessageRequest {
         this.priority = priority;
     }
 
-    public String getBody() {
-        return body;
+    public String getMessage() {
+        return message;
     }
 
-    public void setBody(String body) {
-        this.body = body;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public List<String> getThemes() {
