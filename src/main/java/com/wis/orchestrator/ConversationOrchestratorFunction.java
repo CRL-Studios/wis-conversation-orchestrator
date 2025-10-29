@@ -76,7 +76,7 @@ public class ConversationOrchestratorFunction {
             // This function just logs the registration for analytics/tracking purposes
             logger.log(Level.INFO, "Customer registered successfully: {0}, phone: {1}. " +
                     "Welcome message will be sent after subscription activation.",
-                    event.getData().getCustomerId(), event.getData().getPhone());
+                    new Object[]{event.getData().getCustomerId(), event.getData().getPhone()});
 
             // Could optionally track registration event in analytics or Cosmos DB here
 
