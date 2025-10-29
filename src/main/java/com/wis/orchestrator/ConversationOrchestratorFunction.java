@@ -72,35 +72,13 @@ public class ConversationOrchestratorFunction {
                 return;
             }
 
-            // Create welcome message
-            WelcomeMessage welcomeMessage = WelcomeMessage.builder()
-                    .messageId(java.util.UUID.randomUUID().toString())
-                    .customerId(event.getData().getCustomerId())
-                    .conversationId("conv-" + event.getData().getCustomerId())
-                    .phoneNumber(event.getData().getPhone())
-                    .messageType("onboarding_welcome")
-                    .priority("HIGH")
-                    .message(buildWelcomeMessageText())
-                    .metadata(WelcomeMessage.Metadata.builder()
-                            .registrationEventId(event.getEventId())
-                            .registrationStage(event.getData().getRegistrationStage())
-                            .attempt(1)
-                            .maxRetries(3)
-                            .build())
-                    .build();
+            // NOTE: Welcome message is NOW sent after subscription activation, not after registration
+            // This function just logs the registration for analytics/tracking purposes
+            logger.log(Level.INFO, "Customer registered successfully: {0}, phone: {1}. " +
+                    "Welcome message will be sent after subscription activation.",
+                    event.getData().getCustomerId(), event.getData().getPhone());
 
-            // Serialize and send to message queue
-            String welcomeMessageJson = objectMapper.writeValueAsString(welcomeMessage);
-            outputMessage.setValue(welcomeMessageJson);
-
-            logger.log(Level.INFO, "Welcome message queued successfully for customer: {0}",
-                    event.getData().getCustomerId());
-
-            // Update conversation state (optional - can be done by message handler)
-            conversationService.initializeConversationState(
-                    event.getData().getCustomerId(),
-                    event.getData().getPhone()
-            );
+            // Could optionally track registration event in analytics or Cosmos DB here
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error processing CustomerRegistered event: " + e.getMessage(), e);
