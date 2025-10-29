@@ -129,7 +129,7 @@ public class SchedulerFunction {
                     .customerId(customer.id)
                     .phoneNumber(customer.currentPhone)
                     .messageType("daily_devotional")
-                    .priority("normal")
+                    .priority("NORMAL")
                     .themes(customer.messagingState.extractedThemes)
                     .lifeSeason(customer.messagingState.currentLifeSeason)
                     .build();
@@ -157,7 +157,7 @@ public class SchedulerFunction {
                     .customerId(customer.id)
                     .phoneNumber(customer.currentPhone)
                     .messageType("season_check_in")
-                    .priority("normal")
+                    .priority("NORMAL")
                     .message("Hi! It's been a while. How are things going? " +
                           "Has your season of life changed since we last talked? " +
                           "Feel free to share what's on your heart.")

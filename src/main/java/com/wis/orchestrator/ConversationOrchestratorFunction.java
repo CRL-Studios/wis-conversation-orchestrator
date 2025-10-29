@@ -79,7 +79,7 @@ public class ConversationOrchestratorFunction {
                     .conversationId("conv-" + event.getData().getCustomerId())
                     .phoneNumber(event.getData().getPhone())
                     .messageType("onboarding_welcome")
-                    .priority("high")
+                    .priority("HIGH")
                     .message(buildWelcomeMessageText())
                     .metadata(WelcomeMessage.Metadata.builder()
                             .registrationEventId(event.getEventId())
