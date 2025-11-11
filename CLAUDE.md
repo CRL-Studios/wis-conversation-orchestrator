@@ -76,7 +76,7 @@ message-send-queue
 
 5. **Message Preprocessing**: Message-handler's `preprocessMessage()` enriches request-only messages before sending.
 
-6. **Conversation State**: Uses `ConversationService` to initialize state in Cosmos DB (currently stubbed out - see TODO comments in ConversationService.java:28-38).
+6. **Conversation State**: Uses `ConversationService` to initialize state in Cosmos DB (currently stubbed out - see TODO comments in [ConversationService.java:28-38](src/main/java/com/wis/orchestrator/service/ConversationService.java#L28-L38)).
 
 ## Azure Functions
 
@@ -84,37 +84,37 @@ message-send-queue
 - **Trigger**: Service Bus topic `subscription-events` (subscription: `orchestration-subscription`)
 - **Purpose**: Sends welcome message after subscription activation
 - **Output**: Queues to `message-send-queue`
-- **File**: SubscriptionActivatedFunction.java:40
+- **File**: [SubscriptionActivatedFunction.java:40](src/main/java/com/wis/orchestrator/SubscriptionActivatedFunction.java#L40)
 
 ### ProcessCustomerRegistered
 - **Trigger**: Service Bus topic `customer-events` (subscription: `orchestration-subscription`)
 - **Purpose**: Tracks registration events (welcome message now sent after subscription activation)
-- **File**: ConversationOrchestratorFunction.java:40
+- **File**: [ConversationOrchestratorFunction.java:40](src/main/java/com/wis/orchestrator/ConversationOrchestratorFunction.java#L40)
 
 ### MessageScheduler
 - **Trigger**: Timer (every 5 minutes via cron: `0 */5 * * * *`)
 - **Purpose**: Queries Cosmos DB for customers with scheduled devotionals or check-ins
 - **Output**: Queues messages to `message-send-queue`
-- **File**: SchedulerFunction.java:42
+- **File**: [SchedulerFunction.java:42](src/main/java/com/wis/orchestrator/SchedulerFunction.java#L42)
 
 ### ProcessDevotionalPlanDay
 - **Trigger**: Timer (every 5 minutes via cron: `0 */5 * * * *`)
 - **Purpose**: Sends daily devotional messages from active 7-day plans
 - **Query**: Customers with `activePlanId != null` AND `nextPlanMessageScheduledFor <= now()`
 - **Output**: Queues messages with metadata `{ planId, dayNumber, messageType: "daily_plan_devotion" }`
-- **File**: DevotionalPlanFunction.java:36
+- **File**: [DevotionalPlanFunction.java:36](src/main/java/com/wis/orchestrator/DevotionalPlanFunction.java#L36)
 
 ### ProcessPlanCompletion
 - **Trigger**: Timer (every 5 minutes via cron: `0 */5 * * * *`)
 - **Purpose**: Sends weekly check-in prompt after 7-day plan completes
 - **Query**: Plans with `status = 'completed'` AND `completedAt >= now() - 24h` AND `!checkInSent`
 - **Output**: Queues weekly check-in message asking user to update their season
-- **File**: DevotionalPlanFunction.java:165
+- **File**: [DevotionalPlanFunction.java:165](src/main/java/com/wis/orchestrator/DevotionalPlanFunction.java#L165)
 
 ### HealthCheck
 - **Trigger**: HTTP GET `/api/health`
 - **Auth Level**: Anonymous
-- **File**: ConversationOrchestratorFunction.java:110
+- **File**: [ConversationOrchestratorFunction.java:110](src/main/java/com/wis/orchestrator/ConversationOrchestratorFunction.java#L110)
 
 ## 7-Day Devotional Plan Lifecycle
 
@@ -225,7 +225,7 @@ All 7-day plan messages MUST include metadata:
 
 This metadata is critical - message-handler's ServiceBusListener checks these fields to update plan progress.
 
-**Note**: ConversationService Cosmos DB implementation is currently stubbed (see ConversationService.java:28-38).
+**Note**: ConversationService Cosmos DB implementation is currently stubbed (see [ConversationService.java:28-38](src/main/java/com/wis/orchestrator/service/ConversationService.java#L28-L38)).
 
 ## Environment Variables
 
@@ -234,6 +234,7 @@ This metadata is critical - message-handler's ServiceBusListener checks these fi
 | `ServiceBusConnection` | Azure Service Bus connection string |
 | `COSMOS_DB_URI` | Cosmos DB endpoint URI (e.g., https://account.documents.azure.com:443/) |
 | `COSMOS_DB_KEY` | Cosmos DB primary or secondary key |
+| `CosmosDBConnection` | Alternative connection string format used by Cosmos DB input bindings |
 | `APPLICATIONINSIGHTS_CONNECTION_STRING` | Application Insights for monitoring |
 
 Configure in `local.settings.json` for local development (not checked into git).
@@ -245,10 +246,11 @@ The orchestrator uses a singleton `CosmosDBService` for Cosmos DB access:
 - **Containers**: `devotionalPlans`, `customers`
 - **Read-only access**: Orchestrator queries plans and customers, but updates are minimal (nextPlanMessageScheduledFor)
 - **Partition keys**: Plans use `customerId`, customers use `id`
+- **Implementation**: [CosmosDBService.java](src/main/java/com/wis/orchestrator/service/CosmosDBService.java) (singleton pattern)
 
 ## Important Implementation Details
 
-1. **Logger Signature**: Use `logger.log(Level.X, "message with {0} placeholders", new Object[]{param1, param2})` - parameters must be wrapped in Object array (see ConversationOrchestratorFunction.java:57-58).
+1. **Logger Signature**: Use `logger.log(Level.X, "message with {0} placeholders", new Object[]{param1, param2})` - parameters must be wrapped in Object array (see [ConversationOrchestratorFunction.java:57-58](src/main/java/com/wis/orchestrator/ConversationOrchestratorFunction.java#L57-L58)).
 
 2. **Field Naming**: Message field names must match wis-message-handler expectations:
    - Use `phoneNumber` (not `phone`)
@@ -257,6 +259,11 @@ The orchestrator uses a singleton `CosmosDBService` for Cosmos DB access:
 3. **Jackson Configuration**: ObjectMapper requires `JavaTimeModule` for Java 8 time types (Instant, etc.).
 
 4. **Retry Logic**: Service Bus automatic retries configured (max 5 attempts for topics, 3 for queues). Functions should throw RuntimeException to trigger retries.
+
+5. **Cosmos DB SQL Query Syntax**: Uses Cosmos DB SQL syntax in `@CosmosDBInput` annotations:
+   - `GetCurrentDateTime()` for current timestamp
+   - `DateTimeAdd()` for date arithmetic
+   - `IS_DEFINED()` for null checks
 
 ## Related Services
 
