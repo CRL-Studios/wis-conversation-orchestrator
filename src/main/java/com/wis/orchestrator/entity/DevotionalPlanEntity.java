@@ -34,6 +34,7 @@ public class DevotionalPlanEntity {
     private Instant createdAt;
     private Instant updatedAt;
     private Boolean checkInSent;
+    private Instant checkInSentAt;
     private Integer ttl;
 
     // Getters and Setters
@@ -155,6 +156,14 @@ public class DevotionalPlanEntity {
 
     public void setCheckInSent(Boolean checkInSent) {
         this.checkInSent = checkInSent;
+    }
+
+    public Instant getCheckInSentAt() {
+        return checkInSentAt;
+    }
+
+    public void setCheckInSentAt(Instant checkInSentAt) {
+        this.checkInSentAt = checkInSentAt;
     }
 
     public Integer getTtl() {
