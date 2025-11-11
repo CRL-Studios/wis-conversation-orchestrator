@@ -1,5 +1,6 @@
 package com.wis.orchestrator;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.azure.functions.*;
@@ -346,6 +347,7 @@ public class DevotionalPlanFunction {
     /**
      * Simple DTO for customer data with active plan info.
      */
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private static class CustomerPlanData {
         public String id;
         public String currentPhone;
@@ -353,6 +355,7 @@ public class DevotionalPlanFunction {
         public String status;
         public MessagingStateData messagingState;
 
+        @JsonIgnoreProperties(ignoreUnknown = true)
         private static class MessagingStateData {
             public Instant nextPlanMessageScheduledFor;
             public String timezone;
@@ -363,6 +366,7 @@ public class DevotionalPlanFunction {
     /**
      * Simple DTO for completed plan data.
      */
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private static class CompletedPlanData {
         public String id;
         public String customerId;
