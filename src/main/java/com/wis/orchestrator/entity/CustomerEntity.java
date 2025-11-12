@@ -20,7 +20,29 @@ public class CustomerEntity {
     private String currentPhone;
     private String activePlanId;
     private String status;
+    private Profile profile;
     private MessagingState messagingState;
+
+    public static class Profile {
+        private String firstName;
+        private String lastName;
+
+        public String getFirstName() {
+            return firstName;
+        }
+
+        public void setFirstName(String firstName) {
+            this.firstName = firstName;
+        }
+
+        public String getLastName() {
+            return lastName;
+        }
+
+        public void setLastName(String lastName) {
+            this.lastName = lastName;
+        }
+    }
 
     public static class MessagingState {
         private Instant nextPlanMessageScheduledFor;
@@ -83,6 +105,14 @@ public class CustomerEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(Profile profile) {
+        this.profile = profile;
     }
 
     public MessagingState getMessagingState() {

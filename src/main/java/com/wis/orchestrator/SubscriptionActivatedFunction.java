@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
+import com.wis.orchestrator.entity.CustomerEntity;
 import com.wis.orchestrator.model.SubscriptionActivatedEvent;
 import com.wis.orchestrator.model.WelcomeMessage;
+import com.wis.orchestrator.repository.CustomerRepository;
 import com.wis.orchestrator.service.ConversationService;
 
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,11 +23,13 @@ public class SubscriptionActivatedFunction {
     private static final Logger logger = Logger.getLogger(SubscriptionActivatedFunction.class.getName());
     private final ObjectMapper objectMapper;
     private final ConversationService conversationService;
+    private final CustomerRepository customerRepository;
 
-    public SubscriptionActivatedFunction() {
+    public SubscriptionActivatedFunction(CustomerRepository customerRepository) {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.conversationService = new ConversationService();
+        this.customerRepository = customerRepository;
     }
 
     /**
@@ -76,6 +81,21 @@ public class SubscriptionActivatedFunction {
                 return;
             }
 
+            // Fetch customer to get firstName
+            String firstName = null;
+            try {
+                Optional<CustomerEntity> customerOpt = customerRepository.findById(event.getData().getCustomerId());
+                if (customerOpt.isPresent()) {
+                    CustomerEntity customer = customerOpt.get();
+                    if (customer.getProfile() != null) {
+                        firstName = customer.getProfile().getFirstName();
+                        logger.log(Level.INFO, "Retrieved firstName for customer: {0}", event.getData().getCustomerId());
+                    }
+                }
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Could not fetch customer profile for firstName. Using default greeting. Error: " + e.getMessage());
+            }
+
             // Create welcome message
             WelcomeMessage welcomeMessage = WelcomeMessage.builder()
                     .messageId(java.util.UUID.randomUUID().toString())
@@ -84,7 +104,7 @@ public class SubscriptionActivatedFunction {
                     .phoneNumber(event.getData().getPhoneNumber())
                     .messageType("onboarding_welcome")
                     .priority("HIGH")
-                    .message(buildWelcomeMessageText())
+                    .message(buildWelcomeMessageText(firstName))
                     .metadata(WelcomeMessage.Metadata.builder()
                             .registrationEventId(event.getEventId())
                             .registrationStage("subscription_activated")
@@ -114,15 +134,22 @@ public class SubscriptionActivatedFunction {
     }
 
     /**
-     * Builds the welcome message text that asks for the user's season of life.
+     * Builds the welcome message text that asks for the user's background and season of life.
      *
+     * @param firstName User's first name for personalization
      * @return Welcome message body
      */
-    private String buildWelcomeMessageText() {
-        return "Welcome to Words in Season! " +
-                "We're here to walk with you through life's seasons. " +
-                "\n\n" +
-                "Tell us: What season of life are you in right now? " +
-                "(For example: facing a challenge, celebrating a victory, seeking direction, etc.)";
+    private String buildWelcomeMessageText(String firstName) {
+        String greeting = (firstName != null && !firstName.isEmpty())
+                ? "Hey " + firstName + "! 🌿"
+                : "Hey! 🌿";
+
+        return greeting + "\n" +
+                "Before we begin, we'd love to get to know you a little better.\n\n" +
+                "In 2–3 sentences, tell us about yourself — your background, what you do, " +
+                "and anything that helps us understand who you are (your job, stage of life, or passions).\n\n" +
+                "This helps us personalize your devotionals even more, so each one truly speaks to " +
+                "not only your season but you as a person!\n\n" +
+                "Reply STOP to unsubscribe or HELP for help. Msg & data rates may apply.";
     }
 }
