@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
+import com.wis.orchestrator.config.SpringContext;
 import com.wis.orchestrator.entity.CustomerEntity;
 import com.wis.orchestrator.model.SubscriptionActivatedEvent;
 import com.wis.orchestrator.model.WelcomeMessage;
@@ -25,11 +26,11 @@ public class SubscriptionActivatedFunction {
     private final ConversationService conversationService;
     private final CustomerRepository customerRepository;
 
-    public SubscriptionActivatedFunction(CustomerRepository customerRepository) {
+    public SubscriptionActivatedFunction() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.conversationService = new ConversationService();
-        this.customerRepository = customerRepository;
+        this.customerRepository = SpringContext.getBean(CustomerRepository.class);
     }
 
     /**
