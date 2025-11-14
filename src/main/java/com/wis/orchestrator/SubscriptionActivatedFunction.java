@@ -26,31 +26,37 @@ public class SubscriptionActivatedFunction {
     private static final Logger logger = Logger.getLogger(SubscriptionActivatedFunction.class.getName());
     private final ObjectMapper objectMapper;
     private final ConversationService conversationService;
-    private final CosmosClient cosmosClient;
-    private final CosmosContainer customerContainer;
+    private CosmosContainer customerContainer;
 
     public SubscriptionActivatedFunction() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.conversationService = new ConversationService();
+    }
 
-        // Initialize Cosmos DB client
-        String cosmosUri = System.getenv("COSMOS_DB_URI");
-        String cosmosKey = System.getenv("COSMOS_DB_KEY");
+    /**
+     * Lazily initialize Cosmos DB container.
+     */
+    private CosmosContainer getCustomerContainer() {
+        if (customerContainer == null) {
+            String cosmosUri = System.getenv("COSMOS_DB_URI");
+            String cosmosKey = System.getenv("COSMOS_DB_KEY");
 
-        if (cosmosUri == null || cosmosKey == null) {
-            logger.log(Level.SEVERE, "COSMOS_DB_URI or COSMOS_DB_KEY environment variables not set");
-            throw new IllegalStateException("Cosmos DB configuration missing");
+            if (cosmosUri == null || cosmosKey == null) {
+                logger.log(Level.SEVERE, "COSMOS_DB_URI or COSMOS_DB_KEY environment variables not set");
+                throw new IllegalStateException("Cosmos DB configuration missing");
+            }
+
+            CosmosClient cosmosClient = new CosmosClientBuilder()
+                    .endpoint(cosmosUri)
+                    .key(cosmosKey)
+                    .buildClient();
+
+            customerContainer = cosmosClient
+                    .getDatabase("WIS-Platform")
+                    .getContainer("customers");
         }
-
-        this.cosmosClient = new CosmosClientBuilder()
-                .endpoint(cosmosUri)
-                .key(cosmosKey)
-                .buildClient();
-
-        this.customerContainer = cosmosClient
-                .getDatabase("WIS-Platform")
-                .getContainer("customers");
+        return customerContainer;
     }
 
     /**
@@ -106,7 +112,7 @@ public class SubscriptionActivatedFunction {
             String firstName = null;
             try {
                 String customerId = event.getData().getCustomerId();
-                JsonNode customerJson = customerContainer.readItem(
+                JsonNode customerJson = getCustomerContainer().readItem(
                         customerId,
                         new PartitionKey(customerId),
                         JsonNode.class
