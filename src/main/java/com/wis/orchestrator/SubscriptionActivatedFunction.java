@@ -1,17 +1,19 @@
 package com.wis.orchestrator;
 
+import com.azure.cosmos.CosmosClient;
+import com.azure.cosmos.CosmosClientBuilder;
+import com.azure.cosmos.CosmosContainer;
+import com.azure.cosmos.models.CosmosItemRequestOptions;
+import com.azure.cosmos.models.PartitionKey;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
-import com.wis.orchestrator.config.SpringContext;
-import com.wis.orchestrator.entity.CustomerEntity;
 import com.wis.orchestrator.model.SubscriptionActivatedEvent;
 import com.wis.orchestrator.model.WelcomeMessage;
-import com.wis.orchestrator.repository.CustomerRepository;
 import com.wis.orchestrator.service.ConversationService;
 
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,13 +26,31 @@ public class SubscriptionActivatedFunction {
     private static final Logger logger = Logger.getLogger(SubscriptionActivatedFunction.class.getName());
     private final ObjectMapper objectMapper;
     private final ConversationService conversationService;
-    private final CustomerRepository customerRepository;
+    private final CosmosClient cosmosClient;
+    private final CosmosContainer customerContainer;
 
     public SubscriptionActivatedFunction() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.conversationService = new ConversationService();
-        this.customerRepository = SpringContext.getBean(CustomerRepository.class);
+
+        // Initialize Cosmos DB client
+        String cosmosUri = System.getenv("COSMOS_DB_URI");
+        String cosmosKey = System.getenv("COSMOS_DB_KEY");
+
+        if (cosmosUri == null || cosmosKey == null) {
+            logger.log(Level.SEVERE, "COSMOS_DB_URI or COSMOS_DB_KEY environment variables not set");
+            throw new IllegalStateException("Cosmos DB configuration missing");
+        }
+
+        this.cosmosClient = new CosmosClientBuilder()
+                .endpoint(cosmosUri)
+                .key(cosmosKey)
+                .buildClient();
+
+        this.customerContainer = cosmosClient
+                .getDatabase("WIS-Platform")
+                .getContainer("customers");
     }
 
     /**
@@ -85,12 +105,18 @@ public class SubscriptionActivatedFunction {
             // Fetch customer to get firstName
             String firstName = null;
             try {
-                Optional<CustomerEntity> customerOpt = customerRepository.findById(event.getData().getCustomerId());
-                if (customerOpt.isPresent()) {
-                    CustomerEntity customer = customerOpt.get();
-                    if (customer.getProfile() != null) {
-                        firstName = customer.getProfile().getFirstName();
-                        logger.log(Level.INFO, "Retrieved firstName for customer: {0}", event.getData().getCustomerId());
+                String customerId = event.getData().getCustomerId();
+                JsonNode customerJson = customerContainer.readItem(
+                        customerId,
+                        new PartitionKey(customerId),
+                        JsonNode.class
+                ).getItem();
+
+                if (customerJson != null && customerJson.has("profile")) {
+                    JsonNode profile = customerJson.get("profile");
+                    if (profile.has("firstName")) {
+                        firstName = profile.get("firstName").asText();
+                        logger.log(Level.INFO, "Retrieved firstName for customer: {0}", customerId);
                     }
                 }
             } catch (Exception e) {
