@@ -108,7 +108,7 @@ public class SubscriptionActivatedFunction {
                 return;
             }
 
-            // Fetch customer to get firstName
+            // Fetch customer to get firstName and set onboarding step
             String firstName = null;
             try {
                 String customerId = event.getData().getCustomerId();
@@ -118,15 +118,33 @@ public class SubscriptionActivatedFunction {
                         JsonNode.class
                 ).getItem();
 
-                if (customerJson != null && customerJson.has("profile")) {
-                    JsonNode profile = customerJson.get("profile");
-                    if (profile.has("firstName")) {
-                        firstName = profile.get("firstName").asText();
-                        logger.log(Level.INFO, "Retrieved firstName for customer: {0}", customerId);
+                if (customerJson != null) {
+                    // Get firstName if available
+                    if (customerJson.has("profile")) {
+                        JsonNode profile = customerJson.get("profile");
+                        if (profile.has("firstName")) {
+                            firstName = profile.get("firstName").asText();
+                            logger.log(Level.INFO, "Retrieved firstName for customer: {0}", customerId);
+                        }
                     }
+
+                    // Set onboarding step to "awaiting_background"
+                    // This initiates the two-step onboarding flow
+                    com.fasterxml.jackson.databind.node.ObjectNode customerObject = (com.fasterxml.jackson.databind.node.ObjectNode) customerJson;
+                    customerObject.put("onboardingStep", "awaiting_background");
+                    customerObject.put("onboardingStepUpdatedAt", java.time.Instant.now().toString());
+
+                    // Update the customer record
+                    getCustomerContainer().replaceItem(
+                            customerObject,
+                            customerId,
+                            new PartitionKey(customerId),
+                            null
+                    );
+                    logger.log(Level.INFO, "Set onboardingStep to 'awaiting_background' for customer: {0}", customerId);
                 }
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Could not fetch customer profile for firstName. Using default greeting. Error: " + e.getMessage());
+                logger.log(Level.WARNING, "Could not fetch/update customer profile. Error: " + e.getMessage(), e);
             }
 
             // Create welcome message
