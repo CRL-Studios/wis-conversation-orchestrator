@@ -8,6 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.wis.orchestrator.model.ScheduledMessageRequest;
+import com.wis.orchestrator.util.SentryHelper;
 
 import java.time.Instant;
 import java.time.ZoneId;
