@@ -80,6 +80,10 @@ public class SchedulerFunction {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error processing scheduled messages: " + e.getMessage(), e);
+
+            // Capture exception in Sentry
+            SentryHelper.captureException(e);
+
             throw new RuntimeException("Failed to process scheduled messages", e);
         }
     }

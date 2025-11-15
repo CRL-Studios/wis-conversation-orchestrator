@@ -13,6 +13,7 @@ import com.microsoft.azure.functions.annotation.*;
 import com.wis.orchestrator.model.SubscriptionActivatedEvent;
 import com.wis.orchestrator.model.WelcomeMessage;
 import com.wis.orchestrator.service.ConversationService;
+import com.wis.orchestrator.util.SentryHelper;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -179,15 +180,21 @@ public class SubscriptionActivatedFunction {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error processing SubscriptionActivated event: " + e.getMessage(), e);
+
+            // Capture exception in Sentry
+            SentryHelper.captureException(e);
+
             // Throw exception to trigger Service Bus retry logic
             throw new RuntimeException("Failed to process SubscriptionActivated event", e);
         }
     }
 
     /**
-     * Builds the welcome message text that asks for the user's background and season of life.
+     * Builds the welcome message text that asks for the user's background/introduction.
+     * This is step 1 of the two-step onboarding flow (background → season).
+     * Note: Keep this in sync with MessageTemplates.getWelcomeMessage() in message-handler service.
      *
-     * @param firstName User's first name for personalization
+     * @param firstName User's first name for personalization (can be null)
      * @return Welcome message body
      */
     private String buildWelcomeMessageText(String firstName) {

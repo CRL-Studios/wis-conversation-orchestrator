@@ -7,6 +7,7 @@ import com.microsoft.azure.functions.annotation.*;
 import com.wis.orchestrator.model.CustomerRegisteredEvent;
 import com.wis.orchestrator.model.WelcomeMessage;
 import com.wis.orchestrator.service.ConversationService;
+import com.wis.orchestrator.util.SentryHelper;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -82,6 +83,10 @@ public class ConversationOrchestratorFunction {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error processing CustomerRegistered event: " + e.getMessage(), e);
+
+            // Capture exception in Sentry
+            SentryHelper.captureException(e);
+
             // Throw exception to trigger Service Bus retry logic
             throw new RuntimeException("Failed to process CustomerRegistered event", e);
         }

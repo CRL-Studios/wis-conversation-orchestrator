@@ -9,6 +9,7 @@ import com.wis.orchestrator.entity.DevotionalPlanEntity;
 import com.wis.orchestrator.entity.CustomerEntity;
 import com.wis.orchestrator.model.DailyDevotion;
 import com.wis.orchestrator.service.CosmosDBService;
+import com.wis.orchestrator.util.SentryHelper;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -84,6 +85,10 @@ public class DevotionalPlanFunction {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error processing devotional plan messages: " + e.getMessage(), e);
+
+            // Capture exception in Sentry
+            SentryHelper.captureException(e);
+
             throw new RuntimeException("Failed to process devotional plan messages", e);
         }
     }
@@ -298,6 +303,10 @@ public class DevotionalPlanFunction {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error processing plan completions: " + e.getMessage(), e);
+
+            // Capture exception in Sentry
+            SentryHelper.captureException(e);
+
             throw new RuntimeException("Failed to process plan completions", e);
         }
     }

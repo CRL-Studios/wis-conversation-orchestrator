@@ -75,6 +75,13 @@
             <version>2.0.9</version>
         </dependency>
 
+        <!-- Sentry error tracking and monitoring -->
+        <dependency>
+            <groupId>io.sentry</groupId>
+            <artifactId>sentry</artifactId>
+            <version>7.15.0</version>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
