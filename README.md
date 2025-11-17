@@ -159,12 +159,6 @@ az functionapp config appsettings set \
   --name wis-conversation-orchestrator \
   --resource-group wis-platform-prod \
   --settings "ServiceBusConnection=@Microsoft.KeyVault(SecretUri=https://wis-keyvault.vault.azure.net/secrets/ServiceBusConnection)"
-
-# Enable Application Insights
-az functionapp config appsettings set \
-  --name wis-conversation-orchestrator \
-  --resource-group wis-platform-prod \
-  --settings "APPLICATIONINSIGHTS_CONNECTION_STRING=@Microsoft.KeyVault(SecretUri=https://wis-keyvault.vault.azure.net/secrets/AppInsightsConnection)"
 ```
 
 ## Functions
@@ -214,7 +208,7 @@ traces
 |----------|-------------|----------|
 | `ServiceBusConnection` | Service Bus connection string | Yes |
 | `CosmosDBConnection` | Cosmos DB connection string | Future |
-| `APPLICATIONINSIGHTS_CONNECTION_STRING` | Application Insights | Recommended |
+| `SENTRY_DSN` | Sentry error tracking DSN | Optional |
 
 ## Welcome Message Text
 

@@ -16,6 +16,9 @@ curl http://localhost:7071/api/health
 
 # Deploy to Azure
 mvn azure-functions:deploy
+
+# Check dead-letter queue for failed messages (debugging)
+./peek-deadletter.sh
 ```
 
 ## Architecture Overview
@@ -66,17 +69,25 @@ message-send-queue
    - **Orchestrator**: Scheduling logic - detects WHEN things need to happen, queues requests
    - **Message-handler**: Execution logic - loads data, formats messages, sends SMS
 
-2. **Welcome Message Trigger**: Originally triggered on `CustomerRegistered`, now triggers on `SubscriptionActivated` (after payment). The `ProcessCustomerRegistered` function currently only logs registration for tracking.
+2. **Two-Step Onboarding Flow**:
+   - **Step 1 (awaiting_background)**: Welcome message asks for user's background (2-3 sentences about themselves)
+   - **Step 2 (awaiting_season)**: After background received, asks for current life season
+   - Orchestrator sets `onboardingStep = "awaiting_background"` when sending welcome message
+   - Message-handler updates `onboardingStep` as user progresses through onboarding
 
-3. **Message Format**:
+3. **Welcome Message Trigger**: Originally triggered on `CustomerRegistered`, now triggers on `SubscriptionActivated` (after payment). The `ProcessCustomerRegistered` function currently only logs registration for tracking.
+
+4. **Message Format**:
    - **Complete messages** (welcome, plan devotionals): Include `phoneNumber` and `message` fields
    - **Request messages** (weekly check-in): Only include `customerId` and `messageType`; message-handler loads and formats
 
-4. **Priority Field**: MUST use uppercase values (`"HIGH"`, `"NORMAL"`) to match wis-message-handler format expectations.
+5. **Priority Field**: MUST use uppercase values (`"HIGH"`, `"NORMAL"`) to match wis-message-handler format expectations.
 
-5. **Message Preprocessing**: Message-handler's `preprocessMessage()` enriches request-only messages before sending.
+6. **Message Preprocessing**: Message-handler's `preprocessMessage()` enriches request-only messages before sending.
 
-6. **Conversation State**: Uses `ConversationService` to initialize state in Cosmos DB (currently stubbed out - see TODO comments in [ConversationService.java:28-38](src/main/java/com/wis/orchestrator/service/ConversationService.java#L28-L38)).
+7. **Conversation State**: Uses `ConversationService` to initialize state in Cosmos DB (currently stubbed out - see TODO comments in [ConversationService.java:28-38](src/main/java/com/wis/orchestrator/service/ConversationService.java#L28-L38)).
+
+8. **Lazy Initialization**: Cosmos DB clients use lazy initialization pattern to avoid cold start performance issues (see [SubscriptionActivatedFunction.java:41-61](src/main/java/com/wis/orchestrator/SubscriptionActivatedFunction.java#L41-L61) and [CosmosDBService.java:51-56](src/main/java/com/wis/orchestrator/service/CosmosDBService.java#L51-L56)).
 
 ## Azure Functions
 
@@ -235,7 +246,8 @@ This metadata is critical - message-handler's ServiceBusListener checks these fi
 | `COSMOS_DB_URI` | Cosmos DB endpoint URI (e.g., https://account.documents.azure.com:443/) |
 | `COSMOS_DB_KEY` | Cosmos DB primary or secondary key |
 | `CosmosDBConnection` | Alternative connection string format used by Cosmos DB input bindings |
-| `APPLICATIONINSIGHTS_CONNECTION_STRING` | Application Insights for monitoring |
+| `SENTRY_DSN` | Sentry error tracking DSN (optional - errors logged if not set) |
+| `AZURE_FUNCTIONS_ENVIRONMENT` | Environment name for Sentry (defaults to "production") |
 
 Configure in `local.settings.json` for local development (not checked into git).
 
