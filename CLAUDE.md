@@ -277,6 +277,12 @@ The orchestrator uses a singleton `CosmosDBService` for Cosmos DB access:
    - `DateTimeAdd()` for date arithmetic
    - `IS_DEFINED()` for null checks
 
+6. **Error Tracking**: All caught exceptions should be sent to Sentry via `SentryHelper.captureException(e)`. Sentry auto-initializes on first use if `SENTRY_DSN` is configured (see [SentryHelper.java](src/main/java/com/wis/orchestrator/util/SentryHelper.java)).
+
+7. **Function Timeout**: Functions have 10-minute timeout configured in `host.json`. Timer functions (ProcessDevotionalPlanDay, MessageScheduler) must complete within this window.
+
+8. **Welcome Message Template Sync**: The welcome message in `SubscriptionActivatedFunction.buildWelcomeMessageText()` must stay in sync with `MessageTemplates.getWelcomeMessage()` in wis-message-handler service to ensure consistent user experience.
+
 ## Related Services
 
 - **wis-registration**: Publishes CustomerRegistered events
