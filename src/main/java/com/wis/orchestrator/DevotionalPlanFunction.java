@@ -276,6 +276,7 @@ public class DevotionalPlanFunction {
                     connection = "CosmosDBConnection",
                     sqlQuery = "SELECT * FROM c WHERE " +
                             "c.status = 'completed' " +
+                            "AND c.completedAt >= DateTimeAdd('hour', -24, GetCurrentDateTime()) " +
                             "AND (NOT IS_DEFINED(c.checkInSent) OR c.checkInSent = false)")
             String[] completedPlans,
             @ServiceBusQueueOutput(
