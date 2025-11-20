@@ -22,6 +22,7 @@ public class CustomerEntity {
     private String status;
     private Profile profile;
     private MessagingState messagingState;
+    private BetaProgram betaProgram;
 
     public static class Profile {
         private String firstName;
@@ -121,5 +122,73 @@ public class CustomerEntity {
 
     public void setMessagingState(MessagingState messagingState) {
         this.messagingState = messagingState;
+    }
+
+    public BetaProgram getBetaProgram() {
+        return betaProgram;
+    }
+
+    public void setBetaProgram(BetaProgram betaProgram) {
+        this.betaProgram = betaProgram;
+    }
+
+    /**
+     * Beta program enrollment information.
+     */
+    public static class BetaProgram {
+        private String betaCode;
+        private Instant enrolledAt;
+        private Instant checkoutSurveySentAt;
+        private Instant day7SurveySentAt;
+        private String checkoutSurveyUrl;
+        private String day7SurveyUrl;
+
+        public String getBetaCode() {
+            return betaCode;
+        }
+
+        public void setBetaCode(String betaCode) {
+            this.betaCode = betaCode;
+        }
+
+        public Instant getEnrolledAt() {
+            return enrolledAt;
+        }
+
+        public void setEnrolledAt(Instant enrolledAt) {
+            this.enrolledAt = enrolledAt;
+        }
+
+        public Instant getCheckoutSurveySentAt() {
+            return checkoutSurveySentAt;
+        }
+
+        public void setCheckoutSurveySentAt(Instant checkoutSurveySentAt) {
+            this.checkoutSurveySentAt = checkoutSurveySentAt;
+        }
+
+        public Instant getDay7SurveySentAt() {
+            return day7SurveySentAt;
+        }
+
+        public void setDay7SurveySentAt(Instant day7SurveySentAt) {
+            this.day7SurveySentAt = day7SurveySentAt;
+        }
+
+        public String getCheckoutSurveyUrl() {
+            return checkoutSurveyUrl;
+        }
+
+        public void setCheckoutSurveyUrl(String checkoutSurveyUrl) {
+            this.checkoutSurveyUrl = checkoutSurveyUrl;
+        }
+
+        public String getDay7SurveyUrl() {
+            return day7SurveyUrl;
+        }
+
+        public void setDay7SurveyUrl(String day7SurveyUrl) {
+            this.day7SurveyUrl = day7SurveyUrl;
+        }
     }
 }
