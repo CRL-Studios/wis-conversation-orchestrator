@@ -181,6 +181,11 @@ public class DevotionalPlanFunction {
             logger.log(Level.INFO, "Queued Day {0} message for plan {1}, customer {2}",
                     new Object[]{currentDay, plan.getId(), customer.id});
 
+            // Check if this is Day 7 and customer is in beta program - send survey
+            if (currentDay == 7) {
+                sendDay7SurveyIfBetaUser(customer.id, customer.currentPhone, outputMessages);
+            }
+
             // Update next message time (24 hours later, respecting timezone)
             updateNextMessageTime(customer, currentDay);
 
@@ -355,6 +360,85 @@ public class DevotionalPlanFunction {
     }
 
     /**
+     * Send Day 7 survey to beta users who haven't received it yet.
+     *
+     * @param customerId Customer ID
+     * @param phoneNumber Customer phone number
+     * @param outputMessages Output binding for message queue
+     */
+    private void sendDay7SurveyIfBetaUser(String customerId, String phoneNumber,
+                                          OutputBinding<String[]> outputMessages) {
+        try {
+            // Load full customer entity to check beta program status
+            CosmosDBService cosmosDB = CosmosDBService.getInstance();
+            Optional<CustomerEntity> customerOpt = cosmosDB.findCustomerById(customerId);
+
+            if (customerOpt.isEmpty()) {
+                logger.log(Level.WARNING, "Customer {0} not found when checking for Day 7 survey", customerId);
+                return;
+            }
+
+            CustomerEntity customer = customerOpt.get();
+
+            // Check if customer has beta program
+            if (customer.getBetaProgram() == null) {
+                logger.log(Level.INFO, "Customer {0} is not in beta program - skipping Day 7 survey", customerId);
+                return;
+            }
+
+            // Check if Day 7 survey already sent
+            if (customer.getBetaProgram().getDay7SurveySentAt() != null) {
+                logger.log(Level.INFO, "Day 7 survey already sent to beta user {0}", customerId);
+                return;
+            }
+
+            // Get survey URL
+            String surveyUrl = customer.getBetaProgram().getDay7SurveyUrl();
+            if (surveyUrl == null || surveyUrl.isEmpty()) {
+                logger.log(Level.WARNING, "No Day 7 survey URL configured for beta user {0}", customerId);
+                return;
+            }
+
+            // Create survey message
+            String message = String.format(
+                "🙏 You completed 7 days of devotionals! We hope they've been meaningful. " +
+                "Share your experience to help us improve: %s",
+                surveyUrl
+            );
+
+            // Queue message to message-send-queue
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("messageType", "day_7_survey");
+            metadata.put("betaCode", customer.getBetaProgram().getBetaCode());
+
+            Day7SurveyMessage surveyMessage = Day7SurveyMessage.builder()
+                .messageId(java.util.UUID.randomUUID().toString())
+                .customerId(customerId)
+                .phoneNumber(phoneNumber)
+                .messageType("day_7_survey")
+                .priority("NORMAL")
+                .message(message)
+                .metadata(metadata)
+                .build();
+
+            String messageJson = objectMapper.writeValueAsString(surveyMessage);
+            String[] messages = {messageJson};
+            outputMessages.setValue(messages);
+
+            // Update customer record to mark survey as sent
+            customer.getBetaProgram().setDay7SurveySentAt(java.time.Instant.now());
+            cosmosDB.updateCustomer(customer);
+
+            logger.log(Level.INFO, "Day 7 survey queued for beta user {0}", customerId);
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error sending Day 7 survey to customer {0}: {1}",
+                new Object[]{customerId, e.getMessage()});
+            // Don't throw - devotional message was already queued successfully
+        }
+    }
+
+    /**
      * Simple DTO for customer data with active plan info.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -489,6 +573,66 @@ public class DevotionalPlanFunction {
 
             public WeeklyCheckInRequest build() {
                 return request;
+            }
+        }
+    }
+
+    /**
+     * Message structure for Day 7 survey messages.
+     */
+    private static class Day7SurveyMessage {
+        public String messageId;
+        public String customerId;
+        public String phoneNumber;
+        public String messageType;
+        public String priority;
+        public String message;
+        public Map<String, Object> metadata;
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static class Builder {
+            private Day7SurveyMessage message = new Day7SurveyMessage();
+
+            public Builder messageId(String messageId) {
+                message.messageId = messageId;
+                return this;
+            }
+
+            public Builder customerId(String customerId) {
+                message.customerId = customerId;
+                return this;
+            }
+
+            public Builder phoneNumber(String phoneNumber) {
+                message.phoneNumber = phoneNumber;
+                return this;
+            }
+
+            public Builder messageType(String messageType) {
+                message.messageType = messageType;
+                return this;
+            }
+
+            public Builder priority(String priority) {
+                message.priority = priority;
+                return this;
+            }
+
+            public Builder message(String msg) {
+                message.message = msg;
+                return this;
+            }
+
+            public Builder metadata(Map<String, Object> metadata) {
+                message.metadata = metadata;
+                return this;
+            }
+
+            public Day7SurveyMessage build() {
+                return message;
             }
         }
     }
