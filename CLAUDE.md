@@ -118,9 +118,9 @@ message-send-queue
 ### ProcessPlanCompletion
 - **Trigger**: Timer (every 5 minutes via cron: `0 */5 * * * *`)
 - **Purpose**: Sends weekly check-in prompt after 7-day plan completes
-- **Query**: Plans with `status = 'completed'` AND `completedAt >= now() - 24h` AND `!checkInSent`
+- **Query**: Plans with `status = 'completed'` AND `!checkInSent`
 - **Output**: Queues weekly check-in message asking user to update their season
-- **File**: [DevotionalPlanFunction.java:165](src/main/java/com/wis/orchestrator/DevotionalPlanFunction.java#L165)
+- **File**: [DevotionalPlanFunction.java:271](src/main/java/com/wis/orchestrator/DevotionalPlanFunction.java#L271)
 
 ### HealthCheck
 - **Trigger**: HTTP GET `/api/health`
