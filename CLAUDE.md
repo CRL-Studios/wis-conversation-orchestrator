@@ -118,7 +118,8 @@ message-send-queue
 ### ProcessPlanCompletion
 - **Trigger**: Timer (every 5 minutes via cron: `0 */5 * * * *`)
 - **Purpose**: Sends weekly check-in prompt after 7-day plan completes
-- **Query**: Plans with `status = 'completed'` AND `!checkInSent`
+- **Query**: Plans with `status = 'completed'` AND `checkInSent` is undefined, false, or null
+- **Note**: Query uses `IS_NULL(c.checkInSent)` to handle legacy plans where the field was saved as null after being loaded without the field
 - **Output**: Queues weekly check-in message asking user to update their season
 - **File**: [DevotionalPlanFunction.java:271](src/main/java/com/wis/orchestrator/DevotionalPlanFunction.java#L271)
 

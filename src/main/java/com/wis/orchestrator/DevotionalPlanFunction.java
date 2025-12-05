@@ -281,7 +281,7 @@ public class DevotionalPlanFunction {
                     connection = "CosmosDBConnection",
                     sqlQuery = "SELECT * FROM c WHERE " +
                             "c.status = 'completed' " +
-                            "AND (NOT IS_DEFINED(c.checkInSent) OR c.checkInSent = false)")
+                            "AND (NOT IS_DEFINED(c.checkInSent) OR c.checkInSent = false OR IS_NULL(c.checkInSent))")
             String[] completedPlans,
             @ServiceBusQueueOutput(
                     name = "outputMessages",
