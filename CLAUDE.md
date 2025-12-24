@@ -108,12 +108,12 @@ message-send-queue
 - **Output**: Queues messages to `message-send-queue`
 - **File**: [SchedulerFunction.java:42](src/main/java/com/wis/orchestrator/SchedulerFunction.java#L42)
 
-### ProcessDevotionalPlanDay
+### ProcessDevotionalPlanDay (DISABLED)
+- **Status**: ⚠️ **DISABLED** - Message-handler now handles all devotional scheduling via Service Bus native scheduling
+- **Reason**: This function was causing duplicate messages because both the orchestrator and message-handler were sending the same days
 - **Trigger**: Timer (every 5 minutes via cron: `0 */5 * * * *`)
-- **Purpose**: Sends daily devotional messages from active 7-day plans
-- **Query**: Customers with `activePlanId != null` AND `nextPlanMessageScheduledFor <= now()`
-- **Output**: Queues messages with metadata `{ planId, dayNumber, messageType: "daily_plan_devotion" }`
-- **File**: [DevotionalPlanFunction.java:36](src/main/java/com/wis/orchestrator/DevotionalPlanFunction.java#L36)
+- **Purpose**: Was used to send daily devotional messages from active 7-day plans
+- **File**: [DevotionalPlanFunction.java:46](src/main/java/com/wis/orchestrator/DevotionalPlanFunction.java#L46)
 
 ### ProcessPlanCompletion
 - **Trigger**: Timer (every 5 minutes via cron: `0 */5 * * * *`)
@@ -139,11 +139,12 @@ The core user experience is a 7-day devotional plan that continuously cycles bas
 4. Customer's `activePlanId` field set to plan ID
 
 ### Daily Message Delivery
-1. `ProcessDevotionalPlanDay` runs every 5 minutes
-2. Queries customers with `activePlanId` where next message is due
-3. Loads `DevotionalPlanEntity` from Cosmos DB
-4. Queues message with metadata: `{ planId, dayNumber, messageType: "daily_plan_devotion" }`
-5. Message-handler sends SMS and updates plan's `currentDay` field
+**Note**: Daily devotional scheduling is now handled entirely by `wis-message-handler` using Azure Service Bus native scheduling. The orchestrator's `ProcessDevotionalPlanDay` function is disabled.
+
+1. Message-handler's `ConversationService.scheduleFutureDays()` schedules Days 2-7 at plan creation
+2. Service Bus holds messages until their `ScheduledEnqueueTime`
+3. Message-handler's `ServiceBusListener` processes each day when released
+4. Updates plan's `currentDay` field and DailyDevotion status after sending
 
 ### Plan Completion (Day 7)
 1. Message-handler detects `dayNumber == 7` in metadata

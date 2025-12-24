@@ -69,6 +69,14 @@ public class DevotionalPlanFunction {
         Instant now = Instant.now();
         logger.log(Level.INFO, "ProcessDevotionalPlanDay triggered at: {0}", now);
 
+        // DISABLED: Message-handler now handles all devotional scheduling via Service Bus native scheduling.
+        // This function was causing duplicate messages because both systems were sending the same days.
+        // See: https://github.com/your-org/wis-conversation-orchestrator/issues/XXX
+        logger.log(Level.INFO, "ProcessDevotionalPlanDay is DISABLED - message-handler handles scheduling via Service Bus");
+        if (true) {
+            return;
+        }
+
         if (customersWithPlans == null || customersWithPlans.length == 0) {
             logger.log(Level.INFO, "No customers with active plans due for messages");
             return;
